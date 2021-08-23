@@ -1,0 +1,4 @@
+baseURL = 'https://hhldiniz.github.io'
+languageCode = 'en-us'
+title = 'Hugo's portfolio'
+theme="hugo-developer-portfolio"
