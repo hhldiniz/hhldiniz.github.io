@@ -1,0 +1,137 @@
+{{ define "main" }}
+{{ $data := site.Data.github }}
+{{ $user := $data.user }}
+{{ $stats := $data.stats }}
+{{ $repos := $data.repos }}
+{{ $featuredCount := site.Params.featuredCount | default 4 }}
+{{/* Featured = most starred, then most recently pushed. Repositories without a
+     description are skipped here: a headline card needs something to say. */}}
+{{ $described := where $repos "description" "!=" "" }}
+{{ $featured := first $featuredCount (sort (sort $described "pushed_at" "desc") "stars" "desc") }}
+
+<section class="hero">
+  <div class="wrap hero__inner">
+    <div class="hero__text">
+      <p class="eyebrow">{{ site.Params.tagline }}</p>
+      <h1>{{ $user.name }}</h1>
+      <p class="hero__bio">
+        {{ with $user.bio }}{{ . }}{{ else }}{{ site.Params.description }}{{ end }}
+      </p>
+      <p class="hero__note">
+        Everything below is generated straight from GitHub — every public repository I own,
+        forks excluded.
+      </p>
+      <div class="hero__actions">
+        <a class="button button--primary" href="#projects">Browse the projects</a>
+        <a class="button" href="{{ $user.url }}" rel="noopener noreferrer" target="_blank">
+          {{ partial "icon.html" "github" }}GitHub
+        </a>
+        {{ with site.Params.linkedin }}
+          <a class="button" href="{{ . }}" rel="noopener noreferrer" target="_blank">
+            {{ partial "icon.html" "linkedin" }}LinkedIn
+          </a>
+        {{ end }}
+      </div>
+    </div>
+    {{ with $user.avatar }}
+      <div class="hero__avatar">
+        <img src="{{ . }}" alt="{{ $user.name }}" width="200" height="200" loading="eager" />
+      </div>
+    {{ end }}
+  </div>
+</section>
+
+<section class="stats" aria-label="Portfolio at a glance">
+  <div class="wrap stats__grid">
+    <div class="stat"><span class="stat__value">{{ $stats.repos }}</span><span class="stat__label">Public projects</span></div>
+    <div class="stat"><span class="stat__value">{{ len $stats.languages }}</span><span class="stat__label">Languages</span></div>
+    <div class="stat"><span class="stat__value">{{ $stats.stars }}</span><span class="stat__label">Stars earned</span></div>
+    {{ with $stats.languages }}
+      <div class="stat"><span class="stat__value">{{ (index . 0).name }}</span><span class="stat__label">Most used language</span></div>
+    {{ end }}
+  </div>
+</section>
+
+{{ with $featured }}
+<section class="section" id="featured">
+  <div class="wrap">
+    <header class="section__head">
+      <h2>Featured</h2>
+      <p class="section__sub">The projects that got the most traction.</p>
+    </header>
+    <div class="grid grid--featured">
+      {{ range . }}
+        {{ partial "repo-card.html" (dict "repo" . "featured" true) }}
+      {{ end }}
+    </div>
+  </div>
+</section>
+{{ end }}
+
+<section class="section" id="projects">
+  <div class="wrap">
+    <header class="section__head">
+      <h2>All projects</h2>
+      <p class="section__sub">{{ $stats.repos }} public repositories, forks excluded.</p>
+    </header>
+
+    <div class="toolbar" data-toolbar hidden>
+      <div class="field field--search">
+        <label class="sr-only" for="project-search">Search projects</label>
+        {{ partial "icon.html" "search" }}
+        <input type="search" id="project-search" data-search
+               placeholder="Search by name, description or topic…" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label class="sr-only" for="project-sort">Sort projects</label>
+        <select id="project-sort" data-sort>
+          <option value="recent">Recently updated</option>
+          <option value="stars">Most starred</option>
+          <option value="name">Name (A–Z)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filters" data-filters hidden role="group" aria-label="Filter by language">
+      <button type="button" class="chip is-active" data-language="">All<span class="chip__count">{{ $stats.repos }}</span></button>
+      {{ range $stats.languages }}
+        {{ $color := or (index site.Data.languages .name) "#8b949e" }}
+        <button type="button" class="chip" data-language="{{ .name }}">
+          <span class="lang-dot" style="background:{{ $color }}" aria-hidden="true"></span>{{ .name }}<span class="chip__count">{{ .count }}</span>
+        </button>
+      {{ end }}
+    </div>
+
+    <p class="result-count" data-result-count aria-live="polite" hidden></p>
+
+    <div class="grid" data-grid>
+      {{ range $repos }}
+        {{ partial "repo-card.html" (dict "repo" . "featured" false) }}
+      {{ end }}
+    </div>
+
+    <p class="empty-state" data-empty hidden>No project matches that search. Try another term.</p>
+  </div>
+</section>
+
+<section class="section section--about" id="about">
+  <div class="wrap about">
+    <h2>About</h2>
+    {{ $topLanguages := slice }}
+    {{ range first 3 $stats.languages }}{{ $topLanguages = $topLanguages | append .name }}{{ end }}
+    <p>
+      I'm {{ $user.name }}, a software developer who enjoys mobile and backend work.
+      Most of what you see here is built with {{ delimit $topLanguages ", " " and " }}.
+    </p>
+    <p>
+      This page is a living showcase: a scheduled GitHub Actions workflow pulls my public
+      repositories from the GitHub API and rebuilds the site, so new projects show up on their
+      own and forks are never listed.
+    </p>
+    <p class="about__links">
+      <a class="button" href="{{ $user.url }}" rel="noopener noreferrer" target="_blank">{{ partial "icon.html" "github" }}github.com/{{ $user.login }}</a>
+      {{ with site.Params.linkedin }}<a class="button" href="{{ . }}" rel="noopener noreferrer" target="_blank">{{ partial "icon.html" "linkedin" }}LinkedIn</a>{{ end }}
+    </p>
+  </div>
+</section>
+{{ end }}

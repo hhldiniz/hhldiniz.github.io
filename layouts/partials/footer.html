@@ -1,0 +1,17 @@
+{{ $data := .Site.Data.github }}
+<footer class="site-footer">
+  <div class="wrap site-footer__inner">
+    <p>
+      Built with <a href="https://gohugo.io" rel="noopener noreferrer" target="_blank">Hugo</a>,
+      generated from the GitHub API.
+      {{ with $data.generated_at }}
+        Last updated <time datetime="{{ . }}">{{ (time .).Format "2 January 2006" }}</time>.
+      {{ end }}
+    </p>
+    <p>
+      <a href="https://github.com/{{ .Site.Params.githubUser }}/{{ .Site.Params.githubUser }}.github.io" rel="noopener noreferrer" target="_blank">
+        Source of this site
+      </a>
+    </p>
+  </div>
+</footer>

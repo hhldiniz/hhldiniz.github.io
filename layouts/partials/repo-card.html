@@ -1,0 +1,56 @@
+{{- /* Expects a dict: "repo" (one entry of data/github.json) and "featured" (bool). */ -}}
+{{- $repo := .repo -}}
+{{- $colors := site.Data.languages -}}
+{{- $color := or (index $colors $repo.language) "#8b949e" -}}
+<article class="card{{ if .featured }} card--featured{{ end }}"
+         data-repo
+         data-name="{{ lower $repo.name }}"
+         data-text="{{ lower (printf "%s %s %s %s" $repo.name $repo.description $repo.language (delimit $repo.topics " ")) }}"
+         data-language="{{ $repo.language }}"
+         data-stars="{{ $repo.stars }}"
+         data-pushed="{{ $repo.pushed_at }}">
+  <div class="card__head">
+    <h3 class="card__title">
+      <a href="{{ $repo.url }}" rel="noopener noreferrer" target="_blank">{{ $repo.name }}</a>
+    </h3>
+    {{ if $repo.archived }}
+      <span class="badge badge--archived" title="This repository is archived">
+        {{ partial "icon.html" "archive" }} Archived
+      </span>
+    {{ end }}
+  </div>
+
+  <p class="card__description">
+    {{ with $repo.description }}{{ . }}{{ else }}<span class="muted">No description provided.</span>{{ end }}
+  </p>
+
+  {{ with $repo.topics }}
+    <ul class="topics" aria-label="Topics">
+      {{ range first 4 . }}<li class="topic">{{ . }}</li>{{ end }}
+    </ul>
+  {{ end }}
+
+  <footer class="card__meta">
+    {{ with $repo.language }}
+      <span class="meta-item">
+        <span class="lang-dot" style="background:{{ $color }}" aria-hidden="true"></span>{{ . }}
+      </span>
+    {{ end }}
+    {{ if gt $repo.stars 0 }}
+      <span class="meta-item">{{ partial "icon.html" "star" }}{{ $repo.stars }}</span>
+    {{ end }}
+    {{ if gt $repo.forks 0 }}
+      <span class="meta-item">{{ partial "icon.html" "fork" }}{{ $repo.forks }}</span>
+    {{ end }}
+    {{ with $repo.pushed_at }}
+      <span class="meta-item meta-item--date">
+        Updated <time datetime="{{ . }}">{{ (time .).Format "Jan 2006" }}</time>
+      </span>
+    {{ end }}
+    {{ with $repo.homepage }}
+      <a class="meta-item meta-item--link" href="{{ . }}" rel="noopener noreferrer" target="_blank">
+        {{ partial "icon.html" "link" }}Live
+      </a>
+    {{ end }}
+  </footer>
+</article>

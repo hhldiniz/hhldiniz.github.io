@@ -1,0 +1,25 @@
+{{ $user := .Site.Data.github.user }}
+<header class="site-header">
+  <div class="wrap site-header__inner">
+    <a class="brand" href="{{ "/" | relURL }}">
+      <span class="brand__mark" aria-hidden="true">{{ substr $user.name 0 1 }}</span>
+      <span class="brand__name">{{ $user.name }}</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="#projects">Projects</a>
+      <a href="#about">About</a>
+      <a href="{{ $user.url }}" rel="noopener noreferrer me" target="_blank">
+        {{ partial "icon.html" "github" }}<span class="sr-only">GitHub profile</span>
+      </a>
+      {{ with .Site.Params.linkedin }}
+        <a href="{{ . }}" rel="noopener noreferrer me" target="_blank">
+          {{ partial "icon.html" "linkedin" }}<span class="sr-only">LinkedIn profile</span>
+        </a>
+      {{ end }}
+      <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour theme">
+        <span class="theme-toggle__sun">{{ partial "icon.html" "sun" }}</span>
+        <span class="theme-toggle__moon">{{ partial "icon.html" "moon" }}</span>
+      </button>
+    </nav>
+  </div>
+</header>

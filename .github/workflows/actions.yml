@@ -1,36 +1,52 @@
 name: Deploy to Github Pages
 
-# run when a commit is pushed to "source" branch
 on:
+  # Every push to the source branch.
   push:
     branches:
-    - master
+      - master
+  # Weekly refresh so new public repositories show up without a manual push.
+  schedule:
+    - cron: "0 5 * * 1"
+  # Manual runs from the Actions tab.
+  workflow_dispatch:
+
+# Never let two deploys race each other.
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: write
 
 jobs:
   deploy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-    # checkout to the commit that has been pushed
-    - uses: actions/checkout@v2
-      with:
-        submodules: true  # Fetch Hugo themes (true OR recursive)
-        fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
-    
-    # install Hugo
-    - name: Setup Hugo
-      uses: peaceiris/actions-hugo@v2
-      with:
-        hugo-version: '0.77.0'
-        extended: true
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for .GitInfo and .Lastmod
 
-    # build website
-    - name: Build
-      run: hugo --minify
+      # Refresh data/github.json from the GitHub API. The committed snapshot is
+      # used as-is if the API call fails, so a hiccup never breaks the deploy.
+      - name: Refresh GitHub project data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/fetch_github_data.py --user hhldiniz
 
-    # push the generated content into the `main` (former `master`) branch.
-    - name: Deploy
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_branch: main # if your main branch is `master` use that here.
-        publish_dir: ./public
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: "0.134.3"
+          extended: true
+
+      - name: Build
+        run: hugo --minify
+
+      # Push the generated content into the `main` branch, which GitHub Pages serves.
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: main
+          publish_dir: ./public
